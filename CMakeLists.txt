@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 FATAL_ERROR )
+cmake_minimum_required( VERSION 2.8.12 FATAL_ERROR )
 PROJECT(Stage)
 
 SET( V_MAJOR 4 )
@@ -97,6 +97,7 @@ find_package( PNG REQUIRED )
 # SET( PNG_INCLUDE_DIR /opt/X11/include )
 
 set (FLTK_SKIP_FLUID TRUE) 
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package( FLTK REQUIRED )
 find_package( OpenGL REQUIRED )
 
