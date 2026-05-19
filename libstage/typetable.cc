@@ -25,6 +25,7 @@ void Stg::RegisterModels()
   Register("camera", Creator<ModelCamera>);
   Register("fiducial", Creator<ModelFiducial>);
   Register("gripper", Creator<ModelGripper>);
+  Register("forklift", Creator<ModelForklift>);
   Register("lightindicator", Creator<ModelLightIndicator>);
   Register("position", Creator<ModelPosition>);
   Register("ranger", Creator<ModelRanger>);

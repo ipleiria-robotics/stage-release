@@ -89,7 +89,7 @@ ModelGripper::ModelGripper(World *world, Model *parent, const std::string &type)
 
   SetColor(Color(0.3, 0.3, 0.3, 1.0));
 
-  FixBlocks();
+  //FixBlocks();
 
   // Update() is not reentrant
   thread_safe = false;
@@ -97,7 +97,7 @@ ModelGripper::ModelGripper(World *world, Model *parent, const std::string &type)
   // set default size
   SetGeom(Geom(Pose(0, 0, 0, 0), Size(0.2, 0.3, 0.2)));
 
-  PositionPaddles();
+  //PositionPaddles();
 
   RegisterOption(&showData);
 }
@@ -132,9 +132,7 @@ void ModelGripper::Load()
   if (paddles && strcmp(paddles, "closed") == 0) {
     cfg.paddle_position = 1.0;
     cfg.paddles = PADDLE_CLOSED;
-  }
-
-  if (paddles && strcmp(paddles, "open") == 0) {
+  } else if (paddles && strcmp(paddles, "open") == 0) {
     cfg.paddle_position = 0.0;
     cfg.paddles = PADDLE_OPEN;
   }
@@ -142,17 +140,21 @@ void ModelGripper::Load()
   if (lift && strcmp(lift, "up") == 0) {
     cfg.lift_position = 1.0;
     cfg.lift = LIFT_UP;
-  }
-
-  if (lift && strcmp(lift, "down") == 0) {
+  } else if (lift && strcmp(lift, "down") == 0) {
     cfg.lift_position = 0.0;
     cfg.lift = LIFT_DOWN;
   }
 
   FixBlocks();
 
+  PositionPaddles();
+
   // do this at the end to ensure that the blocks are resize correctly
   Model::Load();
+  // printf("Gripper loaded with paddle size %.2f, %.2f, %.2f, state %s, %s\n", cfg.paddle_size.x,
+  //        cfg.paddle_size.y, cfg.paddle_size.z,
+  //        (cfg.paddles == PADDLE_CLOSED) ? "closed" : "open",
+  //        (cfg.lift == LIFT_UP) ? "up" : "down");
 }
 
 void ModelGripper::Save()
@@ -184,13 +186,17 @@ void ModelGripper::FixBlocks()
   // add three blocks that make the gripper
   // base
   AddBlockRect(0, 0, 1.0 - cfg.paddle_size.x, 1.0, 1.0);
-  AddBlockRect(1.0 - cfg.paddle_size.x, 0, cfg.paddle_size.x, cfg.paddle_size.y, cfg.paddle_size.z);
+  // left paddle
+  AddBlockRect(1.0 - cfg.paddle_size.x, 0.0 , cfg.paddle_size.x,
+               cfg.paddle_size.y, cfg.paddle_size.z);
+  // right paddle
   AddBlockRect(1.0 - cfg.paddle_size.x, 1.0 - cfg.paddle_size.y, cfg.paddle_size.x,
                cfg.paddle_size.y, cfg.paddle_size.z);
-
+  
+  // gripper base
+  paddle_base = &blockgroup.GetBlockMutable(0);
   // left (top) paddle
   paddle_left = &blockgroup.GetBlockMutable(1);
-
   // right (bottom) paddle
   paddle_right = &blockgroup.GetBlockMutable(2);
 
@@ -203,15 +209,19 @@ void ModelGripper::PositionPaddles()
   unsigned int layer = world->GetUpdateCount() % 2;
   UnMap(layer);
 
-  double paddle_center_pos = cfg.paddle_position * (0.5 - cfg.paddle_size.y);
-  paddle_left->SetCenterY(paddle_center_pos + cfg.paddle_size.y / 2.0);
-  paddle_right->SetCenterY(1.0 - paddle_center_pos - cfg.paddle_size.y / 2.0);
+  // Update Y poition of the paddles based on the paddle position.
+  double left_offset = std::max(0.05, (1.0 - cfg.paddle_position) * ((geom.size.y / 2.0) - (geom.size.y * cfg.paddle_size.y)));
+  paddle_left->SetCenterY(left_offset);
+  double right_offset = std::min(-0.05, (1.0 - cfg.paddle_position) * (-(geom.size.y / 2.0) + (geom.size.y * cfg.paddle_size.y)));
+  paddle_right->SetCenterY(right_offset);
+  // printf("paddle position %.2f, left offset %.2f, right offset %.2f\n", cfg.paddle_position, left_offset, right_offset);
 
-  double paddle_bottom = cfg.lift_position * (1.0 - cfg.paddle_size.z);
-  double paddle_top = paddle_bottom + cfg.paddle_size.z;
-
+  // Update Z position of the paddles based on the lift position.
+  double paddle_bottom = cfg.lift_position * (1.0 - cfg.paddle_size.z) * geom.size.z;
+  double paddle_top = paddle_bottom + cfg.paddle_size.z * geom.size.z;
   paddle_left->SetZ(paddle_bottom, paddle_top);
   paddle_right->SetZ(paddle_bottom, paddle_top);
+  // printf("lift position %.2f, paddle bottom %.2f, paddle top %.2f\n", cfg.lift_position, paddle_bottom, paddle_top);
 
   Map(layer);
 }
@@ -430,7 +440,7 @@ void ModelGripper::UpdateContacts()
 
         //       // grab the model we hit - very simple grip model for now
         hit->SetParent(this);
-        hit->SetPose(Pose(0, 0, -1.0 * geom.size.z, 0));
+        //hit->SetPose(Pose(0, 0, -1.0 * geom.size.z, 0));
 
         cfg.gripped = hit;
 

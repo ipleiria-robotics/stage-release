@@ -36,6 +36,7 @@
     ranger_return 1.0
     blob_return 1
     gripper_return 0
+    forklift_return 0
 
     # GUI properties
     gui_nose 0
@@ -108,6 +109,10 @@
 
     - gripper_return <int>\n iff 1, this model can be gripped by a
     gripper and can be pushed around by collisions with anything that
+    has a non-zero obstacle_return.
+
+    - forklift_return <int>\n iff 1, this model can be picked up by 
+    a forklift and can be pushed around by collisions with anything that
     has a non-zero obstacle_return.
 
     - gui_nose <int>\n if 1, draw a nose on the model showing its
@@ -186,7 +191,7 @@ void Pose::Save(Worldfile *wf, const int section, const char *keyword)
 
 Model::Visibility::Visibility()
     : blob_return(true), fiducial_key(0), fiducial_return(0), gripper_return(false),
-      obstacle_return(true), ranger_return(1.0)
+      forklift_return(false), obstacle_return(true), ranger_return(1.0)
 { /* nothing to do */
 }
 
@@ -196,6 +201,7 @@ Model::Visibility &Model::Visibility::Load(Worldfile *wf, int wf_entity)
   fiducial_key = wf->ReadInt(wf_entity, "fiducial_key", fiducial_key);
   fiducial_return = wf->ReadInt(wf_entity, "fiducial_return", fiducial_return);
   gripper_return = wf->ReadInt(wf_entity, "gripper_return", gripper_return);
+  forklift_return = wf->ReadInt(wf_entity, "forklift_return", forklift_return);
   obstacle_return = wf->ReadInt(wf_entity, "obstacle_return", obstacle_return);
   ranger_return = wf->ReadFloat(wf_entity, "ranger_return", ranger_return);
 
@@ -208,6 +214,7 @@ void Model::Visibility::Save(Worldfile *wf, int wf_entity)
   wf->WriteInt(wf_entity, "fiducial_key", fiducial_key);
   wf->WriteInt(wf_entity, "fiducial_return", fiducial_return);
   wf->WriteInt(wf_entity, "gripper_return", gripper_return);
+  wf->WriteInt(wf_entity, "forklift_return", forklift_return);
   wf->WriteInt(wf_entity, "obstacle_return", obstacle_return);
   wf->WriteFloat(wf_entity, "ranger_return", ranger_return);
 }
@@ -1097,6 +1104,11 @@ void Model::SetStall(bool val)
 void Model::SetGripperReturn(bool val)
 {
   vis.gripper_return = val;
+}
+
+void Model::SetForkliftReturn(bool val)
+{
+  vis.forklift_return = val;
 }
 
 void Model::SetFiducialReturn(int val)

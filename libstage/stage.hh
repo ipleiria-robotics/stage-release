@@ -287,6 +287,18 @@ angle random */
     return std::string(buf);
   }
 
+  /**
+   * Invert the transform represented by this pose. This is useful for converting a pose from
+   */
+  static Pose Invert(const Pose &pose)
+  {
+    const double cosa = cos(pose.a);
+    const double sina = sin(pose.a);
+
+    return Pose(-pose.x * cosa - pose.y * sina, pose.x * sina - pose.y * cosa, -pose.z,
+                normalize(-pose.a));
+  }
+
   /** Returns true iff all components of the velocity are zero. */
   bool IsZero() const { return (!(x || y || z || a)); }
   /** Set the pose to zero [0,0,0,0] */
@@ -388,8 +400,8 @@ prefix string
     if (prefix)
       printf("%s", prefix);
 
-    printf("geom pose: (%.2f,%.2f,%.2f) size: [%.2f,%.2f]\n", pose.x, pose.y, pose.a, size.x,
-           size.y);
+    printf("geom pose: (%.2f,%.2f,%.2f) size: [%.2f,%.2f,%.2f]\n", pose.x, pose.y, pose.a, size.x,
+           size.y, size.z);
   }
 
   /** Default constructor. Members pose and size use their default constructors. */
@@ -1927,6 +1939,7 @@ it doesn't exist in this model. */
     int fiducial_key;
     int fiducial_return;
     bool gripper_return;
+    bool forklift_return;
     bool obstacle_return;
     double ranger_return; //!< 0 - 1
 
@@ -2254,6 +2267,7 @@ system.  */
   void SetStall(bool stall);
   void SetGravityReturn(bool val);
   void SetGripperReturn(bool val);
+  void SetForkliftReturn(bool val);
   void SetStickyReturn(bool val);
   void SetRangerReturn(double val);
   void SetObstacleReturn(bool val);
@@ -2466,6 +2480,7 @@ private:
   config_t cfg;
   cmd_t cmd;
 
+  Block *paddle_base;
   Block *paddle_left;
   Block *paddle_right;
 
@@ -2500,6 +2515,82 @@ public:
   /** Command the gripper lift to go up. Wrapper for SetCommand( CMD_UP ). */
   void CommandUp() { SetCommand(CMD_UP); }
   /** Command the gripper lift to go down. Wrapper for SetCommand( CMD_DOWN ). */
+  void CommandDown() { SetCommand(CMD_DOWN); }
+};
+
+// \todo  FORKLIFT MODEL --------------------------------------------------------
+
+class ModelForklift : public Model {
+public:
+  enum lift_state_t {
+    LIFT_DOWN = 0, //!< Default state
+    LIFT_UP,
+    LIFT_UPPING, //!< Verbed these to match the paddle state
+    LIFT_DOWNING
+  };
+
+  enum cmd_t {
+    CMD_NOOP = 0, //!< Default state
+    CMD_UP,
+    CMD_DOWN
+  };
+
+  /** forklift configuration
+   */
+  struct config_t {
+    Size paddle_size; ///< paddle dimensions [m]
+    lift_state_t lift;
+    double lift_position; ///< 0.0 = full down, 1.0 full up [%]
+    Model *gripped;
+    Model *beam; ///< points to a model detected by the beams
+    double beam_range; ///< range of the beam for parts detection [m]
+  };
+
+private:
+  virtual void Update();
+  virtual void DataVisualize(Camera *cam);
+
+  void FixBlocks();
+  double PositionForklift();
+  void UpdateBreakBeamContactsPart();
+  Pose beam_pose;
+  Pose initial_pose;
+  double part_zoffset; ///< z offset of for proper part gripping [m]
+
+  config_t cfg;
+  cmd_t cmd;
+
+  Block *paddle_base;
+  Block *paddle_left;
+  Block *paddle_right;
+
+  static Option showData;
+
+public:
+  static const Size size;
+
+  /// constructor
+  ModelForklift(World *world, Model *parent, const std::string &type);
+  /// destructor
+  virtual ~ModelForklift();
+
+  virtual void Load();
+  virtual void Save();
+
+  /** Configure the forklift */
+  void SetConfig(config_t &newcfg)
+  {
+    this->cfg = newcfg;
+    FixBlocks();
+  }
+
+  /** Returns the state of the forklift .*/
+  config_t GetConfig() { return cfg; }
+  /** Set the current activity of the forklift. */
+  void SetCommand(cmd_t cmd) { this->cmd = cmd; }
+  /** Command the forklift lift to go up. Wrapper for SetCommand( CMD_UP ). */
+  void CommandUp() { SetCommand(CMD_UP); }
+  /** Command the forklift lift to go down. Wrapper for SetCommand( CMD_DOWN ). */
   void CommandDown() { SetCommand(CMD_DOWN); }
 };
 

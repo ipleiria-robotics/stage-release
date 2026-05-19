@@ -22,6 +22,7 @@ set( stageSrcs
 	model_draw.cc
 	model_fiducial.cc
 	model_gripper.cc
+	model_forklift.cc
 	model_lightindicator.cc
 	model_position.cc
 	model_ranger.cc

@@ -43,7 +43,7 @@ own programs.
 # Models
 Stage provides several sensor and actuator models, including sonar
 or infrared rangers, scanning laser rangefinder, color-blob tracking,
-fiducial tracking, bumpers, grippers and mobile robot bases with
+fiducial tracking, bumpers, grippers, forklifts and mobile robot bases with
 odometric or global localization.
 
 
