@@ -2540,10 +2540,6 @@ public:
   struct config_t {
     Size paddle_size; ///< paddle dimensions [m]
     lift_state_t lift;
-    double lift_position; ///< 0.0 = full down, 1.0 full up [%]
-    Model *gripped;
-    Model *beam; ///< points to a model detected by the beams
-    double beam_range; ///< range of the beam for parts detection [m]
   };
 
 private:
@@ -2551,9 +2547,15 @@ private:
   virtual void DataVisualize(Camera *cam);
 
   void FixBlocks();
-  double PositionForklift();
+  void PositionForklift();
   void UpdateBreakBeamContactsPart();
-  Pose beam_pose;
+  double lift_position; ///< 0.0 = full down, 1.0 full up [%]
+  Model *gripped;
+  Model *left_beam; ///< points to a model detected by the left beam
+  Model *right_beam; ///< points to a model detected by the right beam
+  double beam_range; ///< range of the beam for parts detection [m]
+  Pose left_beam_pose;
+  Pose right_beam_pose;
   Pose initial_pose;
   double part_zoffset; ///< z offset of for proper part gripping [m]
 
